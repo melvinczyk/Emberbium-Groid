@@ -613,7 +613,18 @@ public class RenderSectionManager {
         asyncSubmittedTasks.add(() -> this.scheduleRebuild(x, y, z, important));
     }
 
+    // Dev only: counts rebuild requests by the first caller outside Sodium/Minecraft rendering, see AutoProfile
+    public static final boolean TRACE_REBUILDS = Boolean.getBoolean("embeddium.traceRebuilds");
+    public static final java.util.concurrent.ConcurrentHashMap<String, java.util.concurrent.atomic.LongAdder> REBUILD_CALLERS = new java.util.concurrent.ConcurrentHashMap<>();
+
     public void scheduleRebuild(int x, int y, int z, boolean important) {
+        if (TRACE_REBUILDS) {
+            String caller = StackWalker.getInstance().walk(frames -> frames.skip(1)
+                    .map(f -> f.getClassName() + "." + f.getMethodName())
+                    .filter(n -> !n.startsWith("me.jellysquid.mods.sodium.client.render.") && !n.startsWith("net.minecraft.client.renderer.LevelRenderer"))
+                    .limit(3).reduce((a, b) -> a + " < " + b).orElse("?"));
+            REBUILD_CALLERS.computeIfAbsent(caller, k -> new java.util.concurrent.atomic.LongAdder()).increment();
+        }
         if (Thread.currentThread() != renderThread) {
             this.scheduleRebuildOffThread(x, y, z, important);
             return;

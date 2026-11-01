@@ -33,7 +33,7 @@ public class ChunkBuilder {
      * camera movement). However, it also needs to be large enough that the thread is not spending part of the
      * frame doing nothing. 2 seems to be a decent value, and is what Sodium 0.2 used.
      */
-    private static final int TASK_QUEUE_LIMIT_PER_WORKER = 2;
+    private static final int TASK_QUEUE_LIMIT_PER_WORKER = 4;
 
     private final ChunkJobQueue queue = new ChunkJobQueue();
 
@@ -130,7 +130,7 @@ public class ChunkBuilder {
      * thread.
      */
     private static int getOptimalThreadCount() {
-        return Mth.clamp(Math.max(getMaxThreadCount() / 3, getMaxThreadCount() - 6), 1, 10);
+        return Mth.clamp(getMaxThreadCount() - 2, 1, 12);
     }
 
     private static int getThreadCount() {

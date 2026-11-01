@@ -20,4 +20,9 @@ public interface ReadableContainerExtended<T> {
     void sodium$unpack(T[] values, int minX, int minY, int minZ, int maxX, int maxY, int maxZ);
 
     PalettedContainerRO<T> sodium$copy();
+
+    /**
+     * @return the only value in this container if it holds a single value (zero-bit storage), otherwise null
+     */
+    T sodium$getUniformValue();
 }

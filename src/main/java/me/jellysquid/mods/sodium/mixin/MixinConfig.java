@@ -10,6 +10,7 @@ import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import static me.jellysquid.mods.sodium.client.SodiumClientMod.MODNAME;
@@ -74,6 +75,8 @@ public class MixinConfig {
         this.addMixinRule("features.render.world", true);
         this.addMixinRule("features.render.world.clouds", true);
         this.addMixinRule("features.render.world.sky", true);
+        this.addMixinRule("features.render.world.block_entity", true);
+        this.addMixinRule("features.render.entity.backface_cull", true);
 
         this.addMixinRule("features.shader", true);
         this.addMixinRule("features.shader.uniform", true);
@@ -85,6 +88,13 @@ public class MixinConfig {
         this.addMixinRule("features.world", true);
         this.addMixinRule("features.world.biome", true);
         this.addMixinRule("features.world.storage", true);
+        this.addMixinRule("features.world.block_entity", true);
+        this.addMixinRule("compat.metusoblita", true);
+        this.addMixinRule("compat.eclipticseasons", true);
+        this.addMixinRule("compat.particlerain", true);
+        this.addMixinRule("compat.remnantminimaps", true);
+        this.addMixinRule("compat.fieldguide", true);
+        this.addMixinRule("compat.voicechat", true);
 
         this.addMixinRule("workarounds", true);
         this.addMixinRule("workarounds.context_creation", true);
@@ -179,7 +189,22 @@ public class MixinConfig {
         }
     }
 
+    /**
+     * Options that shader mods (Oculus and forks like Emberlens, which register the same mod id) disable outright, but
+     * which are only a problem while a shader pack is active. Their mixins check for that at runtime instead, so having
+     * the shader mod installed with shaders off keeps the optimization.
+     */
+    private static final Set<String> SHADER_RUNTIME_GATED_OPTIONS = Set.of(
+            "mixin.features.render.world.sky",
+            "mixin.features.render.gui.font"
+    );
+
     private void applyModOverride(String modid, String name, Object value) {
+        if ((modid.equals("oculus") || modid.equals("iris")) && Boolean.FALSE.equals(value) && SHADER_RUNTIME_GATED_OPTIONS.contains(name)) {
+            LOGGER.info("Keeping option '{}' enabled despite mod '{}'; it is skipped at runtime while a shader pack is active", name, modid);
+            return;
+        }
+
         MixinOption option = this.options.get(name);
 
         if (option == null) {

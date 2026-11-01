@@ -13,7 +13,7 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.spongepowered.asm.mixin.Unique;
 
-public class SodiumBufferBuilder implements VertexConsumer, VertexBufferWriter {
+public class SodiumBufferBuilder implements VertexConsumer, VertexBufferWriter, org.embeddedt.embeddium.render.entity.BackfaceCullHint {
     private static final int ATTRIBUTE_NOT_PRESENT = -1;
 
     private static final int
@@ -306,6 +306,19 @@ public class SodiumBufferBuilder implements VertexConsumer, VertexBufferWriter {
 
     public void reset() {
         this.writtenAttributes = 0;
+        this.backfaceCulled = false;
+    }
+
+    // Set by BufferSource.getBuffer for the render type this builder is currently collecting; cleared on begin/reset
+    private boolean backfaceCulled;
+
+    public void setBackfaceCulled(boolean culled) {
+        this.backfaceCulled = culled;
+    }
+
+    @Override
+    public boolean embeddium$isBackfaceCulled() {
+        return this.backfaceCulled;
     }
 
     public BufferBuilder getOriginalBufferBuilder() {

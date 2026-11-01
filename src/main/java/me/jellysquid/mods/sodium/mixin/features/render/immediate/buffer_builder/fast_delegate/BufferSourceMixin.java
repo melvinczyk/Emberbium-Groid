@@ -7,6 +7,8 @@ import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import me.jellysquid.mods.sodium.client.render.vertex.buffer.ExtendedBufferBuilder;
 import me.jellysquid.mods.sodium.client.render.vertex.buffer.SodiumBufferBuilder;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import org.embeddedt.embeddium.render.entity.RenderTypeCullState;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Mutable;
@@ -26,10 +28,11 @@ public class BufferSourceMixin {
     protected final Set<BufferBuilder> startedBuffers = new ReferenceOpenHashSet<>();
 
     @ModifyReturnValue(method = "getBuffer", at = @At("RETURN"))
-    private VertexConsumer useFasterVertexConsumer(VertexConsumer vertexConsumer) {
+    private VertexConsumer useFasterVertexConsumer(VertexConsumer vertexConsumer, RenderType renderType) {
         if (vertexConsumer instanceof ExtendedBufferBuilder bufferBuilder) {
             SodiumBufferBuilder replacement = bufferBuilder.sodium$getDelegate();
             if (replacement != null) {
+                replacement.setBackfaceCulled(((RenderTypeCullState) renderType).embeddium$hasBackfaceCulling());
                 return replacement;
             }
         }

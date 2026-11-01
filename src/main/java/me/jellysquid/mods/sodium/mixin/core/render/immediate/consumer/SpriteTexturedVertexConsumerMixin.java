@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(SpriteCoordinateExpander.class)
-public class SpriteTexturedVertexConsumerMixin implements VertexBufferWriter {
+public class SpriteTexturedVertexConsumerMixin implements VertexBufferWriter, org.embeddedt.embeddium.render.entity.BackfaceCullHint {
     @Shadow
     @Final
     private VertexConsumer delegate;
@@ -45,6 +45,12 @@ public class SpriteTexturedVertexConsumerMixin implements VertexBufferWriter {
     @Override
     public boolean canUseIntrinsics() {
         return this.isFullWriter;
+    }
+
+    @Override
+    public boolean embeddium$isBackfaceCulled() {
+        // Only rewrites UVs, so culling is decided by whatever it writes into
+        return this.delegate instanceof org.embeddedt.embeddium.render.entity.BackfaceCullHint hint && hint.embeddium$isBackfaceCulled();
     }
 
     @Override

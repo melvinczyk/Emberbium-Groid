@@ -53,6 +53,13 @@ public class SodiumGameOptions {
         public boolean useTranslucentFaceSorting = true;
         public boolean useRenderPassOptimization = true;
         public boolean useNoErrorGLContext = true;
+        // Skip writing entity/block entity model faces that the GPU would cull anyway
+        public boolean useModelBackfaceCulling = true;
+        // Skip meshing opaque full cubes that are buried on all six sides by other opaque full cubes
+        public boolean useEnclosedBlockSkipping = true;
+        // Vertical squash of the render distance ellipsoid (vertical radius = render distance / scale). 0 = vanilla
+        // cylinder (default, no visual change). 2.0 matches betterfpsdist's default look, which this can replace.
+        public float renderDistanceVerticalScale = 0.0f;
     }
 
     public static class AdvancedSettings {

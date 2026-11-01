@@ -305,7 +305,14 @@ public class DefaultChunkRenderer extends ShaderChunkRenderer {
         });
     }
 
+    // Benchmark-only draw command counter (-Dembeddium.autoProfile=true); constant-folded away otherwise
+    public static final boolean COUNT_DRAWS = Boolean.getBoolean("embeddium.autoProfile");
+    public static final java.util.concurrent.atomic.LongAdder DRAW_COMMANDS = new java.util.concurrent.atomic.LongAdder();
+
     private static void executeDrawBatch(CommandList commandList, GlTessellation tessellation, MultiDrawBatch batch) {
+        if (COUNT_DRAWS) {
+            DRAW_COMMANDS.add(batch.size);
+        }
         try (DrawCommandList drawCommandList = commandList.beginTessellating(tessellation)) {
             drawCommandList.multiDrawElementsBaseVertex(batch, GlIndexType.UNSIGNED_INT);
         }

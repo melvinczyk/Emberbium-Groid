@@ -51,6 +51,13 @@ public class SodiumClientMod {
                 throw new RuntimeException(e);
             }
         }
+        if("true".equals(System.getProperty("embeddium.autoProfile"))) {
+            try {
+                net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(Class.forName("org.embeddedt.embeddium.impl.gametest.content.AutoProfile"));
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        }
         eventBus.addListener(this::onClientSetup);
 
         try {

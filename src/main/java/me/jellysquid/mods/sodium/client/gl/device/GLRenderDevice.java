@@ -126,6 +126,13 @@ public class GLRenderDevice implements RenderDevice {
         }
 
         @Override
+        public void uploadSubData(GlBuffer dst, long writeOffset, ByteBuffer data) {
+            // The copy-write target is not part of vertex array state, so binding it leaves draws undisturbed
+            this.bindBuffer(GlBufferTarget.COPY_WRITE_BUFFER, dst);
+            GL15C.glBufferSubData(GlBufferTarget.COPY_WRITE_BUFFER.getTargetParameter(), writeOffset, data);
+        }
+
+        @Override
         public void bindBuffer(GlBufferTarget target, GlBuffer buffer) {
             if (this.stateTracker.makeBufferActive(target, buffer)) {
                 GL20C.glBindBuffer(target.getTargetParameter(), buffer.handle());

@@ -29,6 +29,11 @@ public class ChunkJobTyped<TASK extends ChunkBuilderTask<OUTPUT>, OUTPUT>
         this.cancelled = true;
     }
 
+    // Benchmark-only instrumentation (-Dembeddium.timeChunkBuilds=true); constant-folded away otherwise
+    public static final boolean TIME_BUILDS = Boolean.getBoolean("embeddium.timeChunkBuilds");
+    public static final java.util.concurrent.atomic.LongAdder BUILD_NANOS = new java.util.concurrent.atomic.LongAdder();
+    public static final java.util.concurrent.atomic.LongAdder BUILD_COUNT = new java.util.concurrent.atomic.LongAdder();
+
     @Override
     public void execute(ChunkBuildContext context) {
         // Task was cancelled before starting
@@ -41,7 +46,12 @@ public class ChunkJobTyped<TASK extends ChunkBuilderTask<OUTPUT>, OUTPUT>
         ChunkJobResult<OUTPUT> result;
 
         try {
+            long start = TIME_BUILDS ? System.nanoTime() : 0L;
             var output = this.task.execute(context, this);
+            if (TIME_BUILDS && this.task instanceof me.jellysquid.mods.sodium.client.render.chunk.compile.tasks.ChunkBuilderMeshingTask) {
+                BUILD_NANOS.add(System.nanoTime() - start);
+                BUILD_COUNT.increment();
+            }
 
             // Task was cancelled while executing
             if (output == null) {

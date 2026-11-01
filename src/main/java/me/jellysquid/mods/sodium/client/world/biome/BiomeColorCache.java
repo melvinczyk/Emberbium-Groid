@@ -14,6 +14,8 @@ public class BiomeColorCache {
     private final BiomeSlice biomeData;
 
     private final Reference2ReferenceOpenHashMap<ColorResolver, Slice[]> slices;
+    private ColorResolver lastResolver;
+    private Slice[] lastSlices;
     private long populateStamp;
 
     private final int blendRadius;
@@ -63,11 +65,20 @@ public class BiomeColorCache {
         var relY = Mth.clamp(blockY, this.minY, this.maxY) - this.minY;
         var relZ = Mth.clamp(blockZ, this.minZ, this.maxZ) - this.minZ;
 
-        if (!this.slices.containsKey(resolver)) {
-            this.initializeSlices(resolver);
+        // Consecutive queries almost always use the same resolver (one block's vertices), so skip the hash lookups
+        Slice[] slices;
+        if (resolver == this.lastResolver) {
+            slices = this.lastSlices;
+        } else {
+            slices = this.slices.get(resolver);
+            if (slices == null) {
+                slices = this.initializeSlices(resolver);
+            }
+            this.lastResolver = resolver;
+            this.lastSlices = slices;
         }
 
-        var slice = this.slices.get(resolver)[relY];
+        var slice = slices[relY];
 
         if (slice.lastPopulateStamp < this.populateStamp) {
             this.updateColorBuffers(relY, resolver, slice);
@@ -78,13 +89,15 @@ public class BiomeColorCache {
         return buffer.get(relX, relZ);
     }
 
-    private void initializeSlices(ColorResolver resolver) {
+    private Slice[] initializeSlices(ColorResolver resolver) {
         var slice = new Slice[this.sizeY];
         this.slices.put(resolver, slice);
 
         for (int y = 0; y < this.sizeY; y++) {
             slice[y] = new Slice(this.sizeXZ);
         }
+
+        return slice;
     }
 
     private void updateColorBuffers(int relY, ColorResolver resolver, Slice slice) {

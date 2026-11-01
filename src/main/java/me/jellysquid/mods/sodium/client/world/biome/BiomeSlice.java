@@ -42,10 +42,18 @@ public class BiomeSlice {
         this.calculateUniform();
     }
 
+    // The registry lookup is two hash probes per chunk build; it only changes with the world
+    private Level defaultBiomeWorld;
+    private Holder<Biome> defaultBiome;
+
     private void copyBiomeData(Level world, ChunkRenderContext context) {
-        var defaultValue = world.registryAccess()
-                .registryOrThrow(Registries.BIOME)
-                .getHolderOrThrow(Biomes.PLAINS);
+        if (this.defaultBiomeWorld != world) {
+            this.defaultBiome = world.registryAccess()
+                    .registryOrThrow(Registries.BIOME)
+                    .getHolderOrThrow(Biomes.PLAINS);
+            this.defaultBiomeWorld = world;
+        }
+        var defaultValue = this.defaultBiome;
 
         for (int sectionX = 0; sectionX < 3; sectionX++) {
             for (int sectionY = 0; sectionY < 3; sectionY++) {

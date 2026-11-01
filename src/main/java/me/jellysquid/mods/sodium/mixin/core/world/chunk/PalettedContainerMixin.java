@@ -69,6 +69,17 @@ public abstract class PalettedContainerMixin<T> implements ReadableContainerExte
     }
 
     @Override
+    public T sodium$getUniformValue() {
+        var data = this.data;
+
+        if (data != null && data.storage() instanceof net.minecraft.util.ZeroBitStorage) {
+            return data.palette().valueFor(0);
+        }
+
+        return null;
+    }
+
+    @Override
     public PalettedContainerRO<T> sodium$copy() {
         return this.copy();
     }

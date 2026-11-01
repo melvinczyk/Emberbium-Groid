@@ -14,7 +14,6 @@ import java.util.Arrays;
 public abstract class BlendedColorProvider<T> implements ColorProvider<T> {
     private static boolean shouldUseVertexBlending;
 
-    private final BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
 
     public static void checkBlendingEnabled() {
         shouldUseVertexBlending = Minecraft.getInstance().options.biomeBlendRadius().get() > 0;
@@ -23,8 +22,11 @@ public abstract class BlendedColorProvider<T> implements ColorProvider<T> {
     @Override
     public void getColors(WorldSlice view, BlockPos pos, T state, ModelQuadView quad, int[] output) {
         if (shouldUseVertexBlending) {
+            // Providers are shared singletons used by every chunk builder thread, so sample with the slice's own
+            // scratch position (each slice belongs to a single thread) rather than a field on the provider
+            BlockPos.MutableBlockPos neighborPos = view.getScratchPos();
             for (int vertexIndex = 0; vertexIndex < 4; vertexIndex++) {
-                output[vertexIndex] = this.getVertexColor(view, pos, quad, vertexIndex);
+                output[vertexIndex] = this.getVertexColor(view, pos, quad, vertexIndex, neighborPos);
             }
         } else {
             // Just sample the exact position of that block (like vanilla), and use the same color on all vertices
@@ -32,7 +34,7 @@ public abstract class BlendedColorProvider<T> implements ColorProvider<T> {
         }
     }
 
-    private int getVertexColor(WorldSlice world, BlockPos blockPos, ModelQuadView quad, int vertexIndex) {
+    private int getVertexColor(WorldSlice world, BlockPos blockPos, ModelQuadView quad, int vertexIndex, BlockPos.MutableBlockPos neighborPos) {
         // Offset the position by -0.5f to align smooth blending with flat blending.
         final float posX = quad.getX(vertexIndex) - 0.5f;
         final float posY = quad.getY(vertexIndex) - 0.5f;
@@ -49,8 +51,6 @@ public abstract class BlendedColorProvider<T> implements ColorProvider<T> {
         final int worldIntX = blockPos.getX() + intX;
         final int worldIntY = blockPos.getY() + intY;
         final int worldIntZ = blockPos.getZ() + intZ;
-
-        var neighborPos = cursor;
 
         // Retrieve the color values for each neighboring block
         final int c00 = this.getColor(world, neighborPos.set(worldIntX + 0, worldIntY, worldIntZ + 0));

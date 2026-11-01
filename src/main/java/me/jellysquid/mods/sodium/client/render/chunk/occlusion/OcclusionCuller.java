@@ -38,6 +38,9 @@ public class OcclusionCuller {
         final var queues = this.queue;
         queues.reset();
 
+        float verticalScale = me.jellysquid.mods.sodium.client.SodiumClientMod.options().performance.renderDistanceVerticalScale;
+        verticalScaleSq = verticalScale > 0.0f ? verticalScale * verticalScale : 0.0f;
+
         this.isCameraInUnloadedSection = false;
         this.init(visitor, queues.write(), viewport, searchDistance, useOcclusionCulling, frame);
         if(this.isCameraInUnloadedSection) {
@@ -172,7 +175,36 @@ public class OcclusionCuller {
         float dy = nearestToZero(oy, oy + 16) - camera.fracY;
         float dz = nearestToZero(oz, oz + 16) - camera.fracZ;
 
-        return DistanceFilterHolder.INSTANCE.isWithinDistance(dx, dy, dz, maxDistance);
+        var filter = DistanceFilterHolder.INSTANCE;
+
+        if (filter != RenderSectionDistanceFilter.DEFAULT) {
+            // Another mod supplied its own filter; respect it as-is
+            return filter.isWithinDistance(dx, dy, dz, maxDistance);
+        }
+
+        return isWithinEllipsoid(dx, dy, dz, maxDistance);
+    }
+
+    // Squared vertical scale of the render distance ellipsoid for the current search; 0 disables the vertical squash
+    private static float verticalScaleSq;
+
+    /**
+     * The vanilla-style cylinder (horizontal radius and vertical half-height both equal to the render distance), with
+     * the top and bottom rounded off into an ellipsoid whose vertical radius is the render distance divided by the
+     * configured scale. Far-away sections well above or below the camera are rarely visible (and mostly fogged), yet
+     * cost traversal, rebuilds and draws. The distances passed in are to the nearest point of the section's box, so a
+     * section is only rejected when every part of it lies outside the shape.
+     */
+    private static boolean isWithinEllipsoid(float dx, float dy, float dz, float maxDistance) {
+        float horizontalSq = (dx * dx) + (dz * dz);
+        float maxSq = maxDistance * maxDistance;
+
+        if (horizontalSq >= maxSq || Math.abs(dy) >= maxDistance) {
+            return false;
+        }
+
+        float scaleSq = verticalScaleSq;
+        return scaleSq == 0.0f || horizontalSq + (dy * dy * scaleSq) < maxSq;
     }
 
     @SuppressWarnings("ManualMinMaxCalculation") // we know what we are doing.

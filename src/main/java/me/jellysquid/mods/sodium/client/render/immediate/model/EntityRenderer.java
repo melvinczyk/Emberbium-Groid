@@ -137,9 +137,21 @@ public class EntityRenderer {
     }
 
     public static void renderCuboidFast(PoseStack.Pose matrices, VertexBufferWriter writer, ModelCuboid cuboid, int light, int overlay, int color) {
+        renderCuboidFast(matrices, writer, cuboid, light, overlay, color, false);
+    }
+
+    /**
+     * @param cullBackfaces whether faces pointing away from the camera may be skipped. Only valid when the target
+     *                      render type culls back faces and the pose is in view space of a perspective projection.
+     */
+    public static void renderCuboidFast(PoseStack.Pose matrices, VertexBufferWriter writer, ModelCuboid cuboid, int light, int overlay, int color, boolean cullBackfaces) {
         prepareVertices(matrices, cuboid);
 
-        var vertexCount = emitQuads(cuboid, color, overlay, light);
+        var vertexCount = cullBackfaces ? emitQuadsCulled(cuboid, color, overlay, light) : emitQuads(cuboid, color, overlay, light);
+
+        if (vertexCount == 0) {
+            return;
+        }
 
         STACK.push();
         writer.push(STACK, SCRATCH_BUFFER, vertexCount, ModelVertex.FORMAT);
@@ -176,6 +188,75 @@ public class EntityRenderer {
         }
 
         return vertexCount;
+    }
+
+    /**
+     * Faces must point away from the camera by at least this distance (in blocks) before being skipped. The projection
+     * matrix can still move the eye slightly (view bobbing), so faces that are only barely back-facing are kept.
+     */
+    private static final float BACKFACE_MARGIN = 0.125f;
+
+    private static int emitQuadsCulled(ModelCuboid cuboid, int color, int overlay, int light) {
+        final var positions = cuboid.mirror ? VERTEX_POSITIONS_MIRRORED : VERTEX_POSITIONS;
+        final var textures = cuboid.mirror ? VERTEX_TEXTURES_MIRRORED : VERTEX_TEXTURES;
+        final var normals = cuboid.mirror ? CUBE_NORMALS_MIRRORED :  CUBE_NORMALS;
+
+        var vertexCount = 0;
+
+        long ptr = SCRATCH_BUFFER;
+
+        for (int quadIndex = 0; quadIndex < NUM_CUBE_FACES; quadIndex++) {
+            if (!cuboid.shouldDrawFace(quadIndex)) {
+                continue;
+            }
+
+            var face = positions[quadIndex];
+
+            if (isBackFacing(face[0], face[1], face[2])) {
+                continue;
+            }
+
+            emitVertex(ptr, face[0], color, textures[quadIndex][0], overlay, light, normals[quadIndex]);
+            ptr += ModelVertex.STRIDE;
+
+            emitVertex(ptr, face[1], color, textures[quadIndex][1], overlay, light, normals[quadIndex]);
+            ptr += ModelVertex.STRIDE;
+
+            emitVertex(ptr, face[2], color, textures[quadIndex][2], overlay, light, normals[quadIndex]);
+            ptr += ModelVertex.STRIDE;
+
+            emitVertex(ptr, face[3], color, textures[quadIndex][3], overlay, light, normals[quadIndex]);
+            ptr += ModelVertex.STRIDE;
+
+            vertexCount += 4;
+        }
+
+        return vertexCount;
+    }
+
+    /**
+     * Uses the winding of the transformed vertices, exactly like the GPU does: with counter-clockwise front faces and
+     * the eye at the origin of view space, a face is back-facing when its winding normal points away from the eye.
+     * Degenerate faces (zero area, e.g. flat cuboids) are never culled here.
+     */
+    private static boolean isBackFacing(Vector3f v0, Vector3f v1, Vector3f v2) {
+        float ax = v1.x - v0.x, ay = v1.y - v0.y, az = v1.z - v0.z;
+        float bx = v2.x - v0.x, by = v2.y - v0.y, bz = v2.z - v0.z;
+
+        float nx = ay * bz - az * by;
+        float ny = az * bx - ax * bz;
+        float nz = ax * by - ay * bx;
+
+        float d = nx * v0.x + ny * v0.y + nz * v0.z;
+
+        if (d <= 0.0f) {
+            return false;
+        }
+
+        float lenSq = nx * nx + ny * ny + nz * nz;
+
+        // d / |n| is the eye's distance behind the face plane
+        return d * d > BACKFACE_MARGIN * BACKFACE_MARGIN * lenSq;
     }
 
     private static void emitVertex(long ptr, Vector3f pos, int color, Vector2f tex, int overlay, int light, int normal) {

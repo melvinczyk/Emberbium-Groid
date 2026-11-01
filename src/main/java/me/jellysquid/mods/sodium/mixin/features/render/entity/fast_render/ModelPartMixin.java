@@ -2,6 +2,7 @@ package me.jellysquid.mods.sodium.mixin.features.render.entity.fast_render;
 
 import me.jellysquid.mods.sodium.client.model.ModelCuboidAccessor;
 import me.jellysquid.mods.sodium.client.render.immediate.model.EntityRenderer;
+import org.embeddedt.embeddium.render.entity.BackfaceCulling;
 import me.jellysquid.mods.sodium.client.render.immediate.model.ModelCuboid;
 import me.jellysquid.mods.sodium.client.render.immediate.model.ModelPartData;
 import me.jellysquid.mods.sodium.client.render.vertex.VertexConsumerUtils;
@@ -106,13 +107,14 @@ public class ModelPartMixin implements ModelPartData {
 
         var cubes = this.cubes;
         int packedColor = ColorABGR.pack(red, green, blue, alpha);
+        boolean cullBackfaces = BackfaceCulling.canCull(vertices);
 
         //noinspection ForLoopReplaceableByForEach
         for(int i = 0; i < cubes.size(); i++) {
             var cube = cubes.get(i);
             var simpleCuboid = ((ModelCuboidAccessor)cube).embeddium$getSimpleCuboid();
             if(simpleCuboid != null) {
-                EntityRenderer.renderCuboidFast(matrixPose, writer, simpleCuboid, light, overlay, packedColor);
+                EntityRenderer.renderCuboidFast(matrixPose, writer, simpleCuboid, light, overlay, packedColor, cullBackfaces);
             } else {
                 // Must use slow path as this cube can't be converted to a simple cuboid
                 cube.compile(matrixPose, vertices, light, overlay, red, green, blue, alpha);

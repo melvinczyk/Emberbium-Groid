@@ -24,6 +24,11 @@ public interface CommandList extends AutoCloseable {
 
     void copyBufferSubData(GlBuffer src, GlBuffer dst, long readOffset, long writeOffset, long bytes);
 
+    /**
+     * Writes {@code data} into {@code dst} at {@code writeOffset} directly from client memory (glBufferSubData).
+     */
+    void uploadSubData(GlBuffer dst, long writeOffset, ByteBuffer data);
+
     void bindBuffer(GlBufferTarget target, GlBuffer buffer);
 
     void unbindVertexArray();

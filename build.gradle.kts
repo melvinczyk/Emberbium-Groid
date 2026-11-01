@@ -85,7 +85,7 @@ neoForge {
             systemProperty("forge.logging.console.level", "info")
 
             systemProperty("mixin.env.remapRefMap", "true")
-            systemProperty("mixin.env.refMapRemappingFile", "${projectDir}/build/createSrgToMcp/output.srg")
+            systemProperty("mixin.env.refMapRemappingFile", "${projectDir}/build/moddev/intermediateToNamed.srg")
             mods.add(neoForge.mods.named("embeddium"))
         }
 
@@ -101,6 +101,49 @@ neoForge {
 
         create("gameTestClient") {
             configureGameTestRun(this)
+        }
+
+        create("autoProfileClient") {
+            client()
+            systemProperty("embeddium.autoProfile", "true")
+        }
+
+        create("terrainProfileClient") {
+            client()
+            systemProperty("embeddium.autoProfile", "true")
+            systemProperty("embeddium.autoProfile.scenario", "terrain")
+        }
+
+        create("autoProfileNoCullClient") {
+            client()
+            systemProperty("embeddium.autoProfile", "true")
+            systemProperty("embeddium.autoProfile.noBackfaceCull", "true")
+        }
+
+        create("rebuildBenchClient") {
+            client()
+            systemProperty("embeddium.autoProfile", "true")
+            systemProperty("embeddium.autoProfile.scenario", "rebuild")
+            systemProperty("embeddium.timeChunkBuilds", "true")
+        }
+
+        create("distanceBenchClient") {
+            client()
+            systemProperty("embeddium.autoProfile", "true")
+            systemProperty("embeddium.autoProfile.scenario", "distance")
+        }
+
+        create("distanceProfileClient") {
+            client()
+            systemProperty("embeddium.autoProfile", "true")
+            systemProperty("embeddium.autoProfile.scenario", "distance")
+            systemProperty("embeddium.autoProfile.spark", "true")
+        }
+
+        create("benchClient") {
+            client()
+            systemProperty("embeddium.autoProfile", "true")
+            systemProperty("embeddium.autoProfile.noSpark", "true")
         }
 
         create("gameTestCiClient") {
@@ -127,6 +170,7 @@ mixin {
 
 obfuscation {
     createRemappingConfiguration(configurations.getByName("compatCompileOnly"))
+    createRemappingConfiguration(configurations.getByName("runtimeOnlyNonPublishable"))
 }
 
 fun fAPIModule(name: String): Dependency {
@@ -163,6 +207,20 @@ dependencies {
         }
     }
     implementation("io.github.llamalad7:mixinextras-forge:0.3.5")
+
+    // The Groid pack's performance/rendering mods, for testing against the real stack: ./gradlew -PwithPackMods ...
+    if (project.hasProperty("withPackMods")) {
+        repositories { flatDir { dirs("devlibs/stack") } }
+        file("devlibs/stack").listFiles()?.filter { it.name.endsWith("-1.jar") }?.forEach {
+            "modRuntimeOnlyNonPublishable"("devlibs:${it.name.removeSuffix("-1.jar")}:1")
+        }
+    }
+
+    // Local spark jar for the autoProfileClient benchmark run (not published)
+    if (file("devlibs/spark-forge-1.10.53.jar").exists()) {
+        repositories { flatDir { dirs("devlibs") } }
+        "modRuntimeOnlyNonPublishable"("devlibs:spark-forge:1.10.53")
+    }
 }
 
 tasks.processResources {

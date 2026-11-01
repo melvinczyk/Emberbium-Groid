@@ -6,6 +6,7 @@ import net.caffeinemc.mods.sodium.api.vertex.buffer.VertexBufferWriter;
 import net.caffeinemc.mods.sodium.api.util.ColorABGR;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.caffeinemc.mods.sodium.api.math.MatrixHelper;
+import org.embeddedt.embeddium.render.ShaderModBridge;
 import org.joml.Matrix4f;
 import org.lwjgl.system.MemoryStack;
 import org.spongepowered.asm.mixin.*;
@@ -59,6 +60,10 @@ public class GlyphRendererMixin {
     }
 
     private boolean drawFast(boolean italic, float x, float y, Matrix4f matrix, VertexConsumer vertexConsumer, float red, float green, float blue, float alpha, int light) {
+        // Shader packs extend the text vertex format; leave glyphs to vanilla (and the shader mod) while one is active
+        if (ShaderModBridge.areShadersEnabled())
+            return false;
+
         var writer = VertexBufferWriter.tryOf(vertexConsumer);
 
         if (writer == null)

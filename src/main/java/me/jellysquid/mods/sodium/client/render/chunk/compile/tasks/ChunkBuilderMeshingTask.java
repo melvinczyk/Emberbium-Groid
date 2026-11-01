@@ -121,7 +121,7 @@ public class ChunkBuilderMeshingTask extends ChunkBuilderTask<ChunkBuildOutput> 
                         blockPos.set(x, y, z);
                         modelOffset.set(x & 15, y & 15, z & 15);
 
-                        if (blockState.getRenderShape() == RenderShape.MODEL) {
+                        if (blockState.getRenderShape() == RenderShape.MODEL && !cache.isEnclosedAndSkippable(blockState, blockPos)) {
                             BakedModel model = cache.getBlockModels()
                                 .getBlockModel(blockState);
                             ModelData modelData = model.getModelData(context.localSlice(), blockPos, blockState, modelDataMap.getOrDefault(blockPos, ModelData.EMPTY));
@@ -135,9 +135,8 @@ public class ChunkBuilderMeshingTask extends ChunkBuilderTask<ChunkBuildOutput> 
 
                             random.setSeed(seed);
 
-                            List<RenderType> layers = model.getRenderTypes(blockState, random, modelData).asList();
-                            for (int layerIndex = 0, layerCount = layers.size(); layerIndex < layerCount; layerIndex++) {
-                                RenderType layer = layers.get(layerIndex);
+                            // Keep this an iterator loop: addons (e.g. Ecliptic Seasons) inject at Iterator.hasNext() here
+                            for (RenderType layer : model.getRenderTypes(blockState, random, modelData)) {
                                 context.update(blockPos, modelOffset, blockState, model, seed, modelData, layer);
                                 cache.getBlockRenderer()
                                         .renderModel(context, buffers);

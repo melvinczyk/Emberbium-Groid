@@ -1,5 +1,7 @@
 package me.jellysquid.mods.sodium.client.world;
 
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
+
 import it.unimi.dsi.fastutil.ints.Int2ReferenceMap;
 import me.jellysquid.mods.sodium.client.world.biome.*;
 import me.jellysquid.mods.sodium.client.world.cloned.ChunkRenderContext;
@@ -89,6 +91,15 @@ public class WorldSlice implements BlockAndTintGetter, BiomeColorView, FabricBlo
     // (Local Section -> Block States) table.
     private final BlockState[][] blockArrays;
 
+    // Writable per-slot arrays that mixed sections are unpacked into. blockArrays points either at these or at a
+    // shared read-only array for sections made of a single state (air, stone, water...), which avoids copying 4096
+    // entries for every uniform neighbor of every chunk build.
+    private final BlockState[][] ownedBlockArrays;
+
+    // Pre-filled read-only arrays for uniform sections, keyed by state. Bounded by the number of distinct states that
+    // fill whole sections in practice, which is small.
+    private final Reference2ReferenceOpenHashMap<BlockState, BlockState[]> uniformBlockArrays = new Reference2ReferenceOpenHashMap<>();
+
     // (Local Section -> Light Arrays) table.
     private final @Nullable DataLayer[][] lightArrays;
 
@@ -153,6 +164,7 @@ public class WorldSlice implements BlockAndTintGetter, BiomeColorView, FabricBlo
         this.world = world;
 
         this.blockArrays = new BlockState[SECTION_ARRAY_SIZE][SECTION_BLOCK_COUNT];
+        this.ownedBlockArrays = new BlockState[SECTION_ARRAY_SIZE][];
         this.lightArrays = new DataLayer[SECTION_ARRAY_SIZE][LIGHT_TYPES.length];
 
         this.blockEntityArrays = new Int2ReferenceMap[SECTION_ARRAY_SIZE];
@@ -161,8 +173,9 @@ public class WorldSlice implements BlockAndTintGetter, BiomeColorView, FabricBlo
         this.biomeSlice = new BiomeSlice();
         this.biomeColors = new BiomeColorCache(this.biomeSlice, Minecraft.getInstance().options.biomeBlendRadius().get());
 
-        for (BlockState[] blockArray : this.blockArrays) {
-            Arrays.fill(blockArray, EMPTY_BLOCK_STATE);
+        for (int i = 0; i < SECTION_ARRAY_SIZE; i++) {
+            this.ownedBlockArrays[i] = this.blockArrays[i];
+            Arrays.fill(this.blockArrays[i], EMPTY_BLOCK_STATE);
         }
     }
 
@@ -190,7 +203,7 @@ public class WorldSlice implements BlockAndTintGetter, BiomeColorView, FabricBlo
         Objects.requireNonNull(section, "Chunk section must be non-null");
 
         try {
-            this.unpackBlockData(this.blockArrays[sectionIndex], context, section);
+            this.unpackBlockData(sectionIndex, context, section);
         } catch(RuntimeException e) {
             throw new IllegalStateException("Exception copying block data for section: " + section.getPosition(), e);
         }
@@ -202,13 +215,23 @@ public class WorldSlice implements BlockAndTintGetter, BiomeColorView, FabricBlo
         this.blockEntityRenderDataArrays[sectionIndex] = section.getBlockEntityRenderDataMap();
     }
 
-    private void unpackBlockData(BlockState[] blockArray, ChunkRenderContext context, ClonedChunkSection section) {
+    private void unpackBlockData(int sectionIndex, ChunkRenderContext context, ClonedChunkSection section) {
         if (section.getBlockData() == null) {
-            Arrays.fill(blockArray, EMPTY_BLOCK_STATE);
+            this.blockArrays[sectionIndex] = this.getUniformBlockArray(EMPTY_BLOCK_STATE);
             return;
         }
 
         var container = ReadableContainerExtended.of(section.getBlockData());
+
+        BlockState uniformState = container.sodium$getUniformValue();
+
+        if (uniformState != null) {
+            this.blockArrays[sectionIndex] = this.getUniformBlockArray(uniformState);
+            return;
+        }
+
+        BlockState[] blockArray = this.ownedBlockArrays[sectionIndex];
+        this.blockArrays[sectionIndex] = blockArray;
 
         SectionPos origin = context.getOrigin();
         SectionPos pos = section.getPosition();
@@ -232,14 +255,41 @@ public class WorldSlice implements BlockAndTintGetter, BiomeColorView, FabricBlo
         }
     }
 
+    private BlockState[] getUniformBlockArray(BlockState state) {
+        BlockState[] array = this.uniformBlockArrays.get(state);
+
+        if (array == null) {
+            if (this.uniformBlockArrays.size() >= 256) {
+                // Guard against unbounded growth from exotic worlds; rebuilding a few arrays is cheap
+                this.uniformBlockArrays.clear();
+            }
+            array = new BlockState[SECTION_BLOCK_COUNT];
+            Arrays.fill(array, state);
+            this.uniformBlockArrays.put(state, array);
+        }
+
+        return array;
+    }
+
+    private final BlockPos.MutableBlockPos scratchPos = new BlockPos.MutableBlockPos();
+
+    /**
+     * @return a mutable position owned by this slice, for callers that need temporary positions while meshing. Each
+     * slice is used by exactly one thread at a time, unlike most providers, which are shared.
+     */
+    public BlockPos.MutableBlockPos getScratchPos() {
+        return this.scratchPos;
+    }
+
     public void reset() {
         // erase any pointers to resources we no longer need
         // no point in cleaning the pre-allocated arrays (such as block state storage) since we hold the
         // only reference.
-        for (int sectionIndex = 0; sectionIndex < SECTION_ARRAY_LENGTH; sectionIndex++) {
+        for (int sectionIndex = 0; sectionIndex < SECTION_ARRAY_SIZE; sectionIndex++) {
             Arrays.fill(this.lightArrays[sectionIndex], null);
 
             this.blockEntityArrays[sectionIndex] = null;
+            this.blockEntityRenderDataArrays[sectionIndex] = null;
         }
     }
 

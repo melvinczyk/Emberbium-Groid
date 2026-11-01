@@ -635,7 +635,9 @@ public class SodiumWorldRenderer {
         }
         double[] box = cached.embeddium$box();
         if (box == null || cached.embeddium$boxState() != state) {
-            box = renderBoxOf(state, blockEntity, pos);
+            // Shapes like shulker boxes depend on block entity state, so a per-state cache would go stale;
+            // cache a box padded by one block instead of re-querying the shape every frame
+            box = block.hasDynamicShape() ? DYNAMIC_SHAPE_BOX : renderBoxOf(state, blockEntity, pos);
             cached.embeddium$setBox(state, box);
         }
         if (box == ALWAYS_VISIBLE_BOX) {
@@ -649,6 +651,7 @@ public class SodiumWorldRenderer {
     }
 
     private static final double[] ALWAYS_VISIBLE_BOX = new double[0];
+    private static final double[] DYNAMIC_SHAPE_BOX = new double[]{-1.0, -1.0, -1.0, 2.0, 2.0, 2.0};
 
     private static double[] renderBoxOf(BlockState state, BlockEntity blockEntity, BlockPos pos) {
         try {
