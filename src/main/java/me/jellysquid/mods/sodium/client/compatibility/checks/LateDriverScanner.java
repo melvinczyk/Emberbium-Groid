@@ -43,6 +43,8 @@ public class LateDriverScanner {
         LOGGER.info("OpenGL Renderer: {}", driver.renderer());
         LOGGER.info("OpenGL Version: {}", driver.version());
 
+        me.jellysquid.mods.sodium.client.compatibility.environment.IntegratedGpuProfile.detect(driver);
+
         if (!isSupportedNvidiaDriver(driver)) {
             Console.instance()
                     .logMessage(MessageLevel.SEVERE, Component.translatable("sodium.console.broken_nvidia_driver"), 30.0);

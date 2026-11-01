@@ -70,6 +70,7 @@ public class SodiumClientMod {
     public void onClientSetup(final FMLClientSetupEvent event) {
         IncompatibleModManager.checkMods(event);
         FlawlessFrames.onClientInitialization();
+        event.enqueueWork(me.jellysquid.mods.sodium.client.compatibility.environment.IntegratedGpuProfile::applyOnce);
     }
 
     public static SodiumGameOptions options() {
