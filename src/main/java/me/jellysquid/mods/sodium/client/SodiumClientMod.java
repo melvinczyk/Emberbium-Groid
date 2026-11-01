@@ -2,6 +2,7 @@ package me.jellysquid.mods.sodium.client;
 
 import me.jellysquid.mods.sodium.client.data.fingerprint.FingerprintMeasure;
 import me.jellysquid.mods.sodium.client.data.fingerprint.HashedFingerprint;
+import me.jellysquid.mods.sodium.client.compatibility.environment.IntegratedGpuProfile;
 import me.jellysquid.mods.sodium.client.gui.SodiumGameOptions;
 import net.minecraftforge.fml.IExtensionPoint;
 import net.minecraftforge.fml.ModList;
@@ -70,7 +71,6 @@ public class SodiumClientMod {
     public void onClientSetup(final FMLClientSetupEvent event) {
         IncompatibleModManager.checkMods(event);
         FlawlessFrames.onClientInitialization();
-        event.enqueueWork(me.jellysquid.mods.sodium.client.compatibility.environment.IntegratedGpuProfile::applyOnce);
     }
 
     public static SodiumGameOptions options() {
@@ -159,6 +159,8 @@ public class SodiumClientMod {
     }
 
     public static boolean canUseModernGlPaths() {
-        return SodiumClientMod.options().advanced.useModernGlPaths && !ShaderModBridge.areShadersEnabled();
+        boolean wanted = SodiumClientMod.options().advanced.useModernGlPaths
+                || (IntegratedGpuProfile.isActive() && org.lwjgl.opengl.GL.getCapabilities().OpenGL43);
+        return wanted && !ShaderModBridge.areShadersEnabled();
     }
 }

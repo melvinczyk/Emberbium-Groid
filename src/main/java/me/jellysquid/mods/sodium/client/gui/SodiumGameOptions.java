@@ -66,7 +66,7 @@ public class SodiumGameOptions {
         public boolean enableMemoryTracing = false;
         public boolean useAdvancedStagingBuffers = true;
         public boolean useModernGlPaths = false;
-        public boolean integratedGpuProfileApplied = false;
+        public boolean autoTuneIntegratedGpu = true;
         public boolean disableIncompatibleModWarnings = false;
 
         public int cpuRenderAheadLimit = 3;
