@@ -1,6 +1,6 @@
 # Emberbium — Claude Code Rules
 
-Groid-owned Forge 1.20.1 mod. History was reset at v0.1.0 (Emberbium: v0.3.32); there is **no remote**, so never `git push`, `git pull` or `git fetch`. Java 21 builds the mod (`JAVA_HOME=$(/usr/libexec/java_home -v 21)` on macOS; Java 25 breaks Gradle).
+Groid-owned Forge 1.20.1 mod, forked from [shuttheirprayer/Emberbium](https://github.com/shuttheirprayer/Emberbium): our history sits on upstream `c8280457`, starting with the "Groid changes on top of upstream Emberbium (0.3.32)" commit. Remote `origin` is the Groid GitHub repo; never `git push`, `git pull` or `git fetch` unless the user asks. Java 21 builds the mod (`JAVA_HOME=$(/usr/libexec/java_home -v 21)` on macOS; Java 25 breaks Gradle).
 
 ## Branching: never work on `master`
 
