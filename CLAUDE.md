@@ -1,4 +1,4 @@
-# Emberbium — Claude Code Rules
+# Groidberbium — Claude Code Rules
 
 Groid-owned Forge 1.20.1 mod, forked from [shuttheirprayer/Emberbium](https://github.com/shuttheirprayer/Emberbium): our history sits on upstream `c8280457`, starting with the "Groid changes on top of upstream Emberbium (0.3.32)" commit. Remote `origin` is the Groid GitHub repo; never `git push`, `git pull` or `git fetch` unless the user asks. Java 21 builds the mod (`JAVA_HOME=$(/usr/libexec/java_home -v 21)` on macOS; Java 25 breaks Gradle).
 
@@ -32,5 +32,5 @@ Never leave a task half-merged on `master`. Never delete or rewrite `master`'s h
 
 - Version lives in `gradle.properties:mod_version`. Bump it by hand before merging; **never reuse a released version**. Patch for fixes, minor for features, major for breaking changes.
 - Stays on upstream Embeddium's 0.3.x line (addons declare `embeddium` version ranges); bump the patch only, never go below 0.3.31.
-- After the final build on `master`: `git tag -a v<ver> -m "Emberbium <ver>"`.
+- After the final build on `master`: `git tag -a v<ver> -m "Groidberbium <ver>"`.
 - If a jar replaces the one in the modpack (`Groid Pack OG/mods`), move the old jar to `mods-old-jars/` rather than deleting it.

@@ -29,4 +29,4 @@ pluginManagement {
 }
 
 val minecraft_version: String by settings
-rootProject.name = "emberbium-${minecraft_version}"
+rootProject.name = "groidberbium-${minecraft_version}"
