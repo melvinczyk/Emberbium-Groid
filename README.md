@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/logo.gif" width="192" height="192" alt="Emberbium-Groid logo">
+</p>
+
 # Emberbium-Groid
 Emberbium-Groid is a fork of Emberbium, which is a fork of Embeddium... which is the Forge port of Sodium. This fork performs better than Emberbium, fixes bugs and greatly increases the rendering performance of Emberbium.
 
