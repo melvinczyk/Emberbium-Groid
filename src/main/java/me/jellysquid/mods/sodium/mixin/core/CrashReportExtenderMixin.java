@@ -15,8 +15,8 @@ public class CrashReportExtenderMixin {
         try {
             var mods = MixinTaintDetector.getTaintingMods();
             if(!mods.isEmpty()) {
-                builder.append("// Emberbium instance tainted by mods: [").append(String.join(", ", mods)).append("]\n");
-                builder.append("// Please do not reach out for Emberbium support without removing these mods first.\n");
+                builder.append("// Groidberbium instance tainted by mods: [").append(String.join(", ", mods)).append("]\n");
+                builder.append("// Please do not reach out for Groidberbium support without removing these mods first.\n");
                 builder.append("// -------\n");
             }
         } catch(Throwable ignored) {

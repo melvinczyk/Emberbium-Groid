@@ -25,7 +25,7 @@ import java.util.List;
  * records FPS and runs a spark render-thread profile, then exits. Enabled with -Dembeddium.autoProfile=true.
  */
 public class AutoProfile {
-    private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger("Emberbium/AutoProfile");
+    private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger("Groidberbium/AutoProfile");
     public static final boolean ENABLED = Boolean.getBoolean("embeddium.autoProfile");
     private static final int WARMUP_TICKS = 300;
     private static final int MEASURE_TICKS = 20 * 65;

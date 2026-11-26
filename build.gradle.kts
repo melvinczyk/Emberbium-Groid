@@ -20,7 +20,7 @@ tasks.withType<JavaCompile> {
 
 version = getModVersion()
 group = "maven_group"()
-println("Emberbium: $version")
+println("Groidberbium: $version")
 
 base {
     archivesName = "archives_base_name"()

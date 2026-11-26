@@ -5,11 +5,11 @@ license="LGPL-3.0-only"
 [[mods]]
 modId="embeddium"
 version="${file.jarVersion}"
-displayName="Emberbium"
+displayName="Groidberbium"
 logoFile="icon.png"
 logoBlur=false
 description='''
-Emberbium is a performance-focused fork of Embeddium, which is a Forge port of Sodium.
+Groidberbium is a performance-focused fork of Emberbium, itself a fork of Embeddium, the Forge port of Sodium.
 
 The mod id remains "embeddium" so that existing addons (Oculus, Embeddium Extra, and others) continue to work unmodified.
 '''
@@ -19,7 +19,7 @@ authors="Misanthropy"
 [[mods]]
 modId = "rubidium"
 version = "0.7.1"
-displayName = "Rubidium (Emberbium)"
+displayName = "Rubidium (Groidberbium)"
 description = '''
 Stub, to allow mods detecting Rubidium to function as expected.
 '''

@@ -11,7 +11,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 
 public final class BackfaceCulling {
-    private static final Logger LOGGER = LoggerFactory.getLogger("Emberbium/BackfaceCulling");
+    private static final Logger LOGGER = LoggerFactory.getLogger("Groidberbium/BackfaceCulling");
 
     // Shader packs render extra passes (e.g. shadows) from other viewpoints using the same geometry, so culling is
     // only allowed while no shader pack is active. Iris/Oculus (and forks such as Emberlens) expose this through
